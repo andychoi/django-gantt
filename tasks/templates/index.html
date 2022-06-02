@@ -1,10 +1,16 @@
+{% load static %}
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
-    <link rel="stylesheet" href="{{MEDIA_URL}}dist/app.css">
+    <link rel="stylesheet" href="{% static 'app.css' %}">
     <script defer src="https://use.fontawesome.com/releases/v5.0.6/js/all.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css" integrity="sha512-57KPd8WI3U+HC1LxsxWPL2NKbW82g0BH+0PuktNNSgY1E50mnIc0F0cmWxdnvrWx09l8+PU2Kj+Vz33I+0WApw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js" integrity="sha512-HyGTvFEibBWxuZkDsE2wmy0VQ0JRirYgGieHp0pUmmwyrcFkAbn55kZrSXzCgKga04SIti5jZQVjbTSzFpzMlg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
   </head>
   <body>
   <section class="section">
@@ -14,9 +20,7 @@
                 <div class="aside">
                 
                     <h3 class="menu-label">Projects</h3>
-                    
                     <hr>
-                
                     <ul class="menu-list">
                         {%for p in projects %}
                             {% if p.tasks.count > 0 %}
@@ -39,8 +43,6 @@
             </div>  
             {% if tasks_count %}
             <div class="column is-10">
-               
-
                 <div class="tabs  is-centered is-toggle">
                     <ul>
                         <li  class="change">
@@ -62,7 +64,19 @@
                         </li>
                     </ul>
                 </div>
-                  <div id="gantt" ></div>
+
+                <div class='container'>
+                <div class="card" style="overflow: scroll">
+                  <svg id="gantt-2" ></svg>
+                </div>
+                <!-- <div class="mx-auto mt-3 btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-light">Quarter Day</button>
+                    <button type="button" class="btn btn-sm btn-light">Half Day</button>
+                    <button type="button" class="btn btn-sm btn-light">Day</button>
+                    <button type="button" class="btn btn-sm btn-light active">Week</button>
+                    <button type="button" class="btn btn-sm btn-light">Month</button>
+                  </div> -->
+                </div>
             </div>
             {% endif %}
         </div>
@@ -71,10 +85,71 @@
 
   <script type="text/javascript">
       
-       var tasks ={{tasks|safe}};
+        var tasks ={{tasks|safe}};
+        
+        var gantt2 = new Gantt("#gantt-2", tasks, {
+            header_height: 50,
+            column_width: 30,
+            step: 24,
+            view_modes: ['Day', 'Week', 'Month'],
+            bar_height: 20,
+            bar_corner_radius: 3,
+            arrow_curve: 5,
+            padding: 18,
+            view_mode: 'Day',
+            date_format: 'YYYY-MM-DD',
+            custom_popup_html: null            
+        });
+        gantt2.change_view_mode('Week')
 
   </script>
-<script defer src="{{MEDIA_URL}}dist/app.js"></script>
+
+<script>
+    var gantt2 = new Gantt('#gantt-2', tasks, {
+        // can be a function that returns html
+        // or a simple html string
+        custom_popup_html: function(task) {
+        // the task object will contain the updated
+        // dates and progress value
+        const end_date = task._end.format('MMM D');
+        return `
+            <div class="details-container">
+            <h5>${task.name}</h5>
+            <p>Expected to finish by ${end_date}</p>
+            <p>${task.progress}% completed!</p>
+            </div>
+        `;
+        }
+    });
+
+
+    toggle_class = function($this){
+    // toggle class
+        var elemtns = document.querySelectorAll(".change")
+        for(i=0; i<elemtns.length; i++){
+            elemtns[i].classList.remove("is-active")
+        }
+        
+        $this.parentNode.classList.add("is-active")
+    }    
+
+    window.change = function ($this) {
+        //$this.preventDefault();
+        gantt2.hide_popup();
+        gantt2.change_view_mode($this.textContent);
+        toggle_class($this);
+    }
+    
+    document.addEventListener('DOMContentLoaded', function(){
+        gantt2 = new Gantt_( document.querySelector("#gantt-2"), tasks);
+        gantt2.change_view_mode();
+        var e = document.querySelector(".change a")
+        toggle_class(e);
+    });    
+</script>
+
+<!-- <link rel="stylesheet" href="{% static 'app.js' %}"> -->
+
   </body>
 </html>
 
